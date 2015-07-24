@@ -1,0 +1,6 @@
+#!/usr/bin/env node
+'use strict';
+
+process.bin = process.title = 'pepperpass';
+
+require('./pepperpass-bin');

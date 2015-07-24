@@ -1,0 +1,27 @@
+{
+  "name": "pepperpass",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chamot1111/pepperpass.git"
+  },
+  "license": "MIT",
+  "author": "chamot1111",
+  "engines": {
+    "node": "*"
+  },
+  "homepage": "https://github.com/chamot1111/pepperpass",
+  "dependencies": {
+    "copy-paste": "1.1.3",
+    "minimist": "1.1.1",
+    "jssha": "*",
+    "underscore": "1.8.3",
+    "prompt": "*"
+  },
+  "devDependencies": {},
+  "bin": "bin/pepperpass",
+  "preferGlobal": true,
+  "files": [
+    "bin"
+  ]
+}
