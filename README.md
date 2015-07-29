@@ -12,7 +12,7 @@ This is a generator of unique password for junk sites. You have only to remember
 
 The formula to make this transformation is:
 
-    Trunk16(SHA-512(password + ctx_identifier)) = unique password
+    Trunk(SHA-512-B64(password + ':' + ctx_identifier), length) = unique password
 
 ## hasher
 
