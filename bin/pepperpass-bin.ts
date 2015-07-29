@@ -7,13 +7,18 @@ import _         = require('underscore');
 import prompt    = require('prompt');
 import url       = require('url');
 
+let startSlice = (process.argv[0] == 'node')? 2 : 1;
+let argv: any = minimist(process.argv.slice(startSlice));
+
 class Encoder {
     pass: string;
     identifier: string;
+    length: number;
+    alphaNumericRestrict: boolean;
 
-    constructor(pass: string, identifier: string) {
-        this.pass = pass;
-        this.identifier = identifier;
+    constructor() {
+      this.length = 23;
+      this.alphaNumericRestrict = false;
     }
 
     getTextToHash(): string {
@@ -24,7 +29,11 @@ class Encoder {
       var shaObj = new jssha("SHA-512", "TEXT");
       shaObj.update(this.getTextToHash());
       var hash = shaObj.getHash("B64");
-      return hash.substr(0, 23);
+      if(this.alphaNumericRestrict) {
+        hash = hash.replace('/', 'a');
+        hash = hash.replace('+', 'b');
+      }
+      return hash.substr(0, this.length);
     }
 }
 
@@ -32,7 +41,15 @@ function areParamsCorrects(argv: any): boolean {
   // { _: [], u: 'toto' }
   // { _: [], i: 'toto' }
   let {u, i} = argv;
-  return ((u != null) || (i != null)) && (_.keys(argv).length == 2);
+  let mandatoryCount = _.size(_.chain(argv)
+              .keys()
+              .filter(function(k: string) { return _.contains(['u', 'i'], k) })
+              .value());
+  let unknownParametersCount = _.size(_.chain(argv)
+              .keys()
+              .reject(function(k: string) { return _.contains(['u', 'i', 'l', 'r', '_'], k)})
+              .value());
+  return mandatoryCount == 1 && unknownParametersCount == 0;
 }
 
 function parseIdentifierFromURL(aUrl: string): string {
@@ -44,14 +61,18 @@ function parseIdentifierFromURL(aUrl: string): string {
   return hostname;
 }
 
+function PrintUsage() {
+  console.log('usage: pepperpass [-u url] [-i identifier]');
+  console.log('       -u: use an url as identifier');
+  console.log('       -i: use a raw identifier as salt word');
+  console.log('       -r: restrict caracters to [a-Z0-9]');
+  console.log('       -l: length (default 23)');
+}
+
 function parseIdentifierFromArgv(): string {
-  let startSlice = (process.argv[0] == 'node')? 2 : 1;
-  let argv: any = minimist(process.argv.slice(startSlice));
 
   if(!areParamsCorrects(argv)) {
-    console.log('usage: pepperpass [-u url] [-i identifier]');
-    console.log('       -u: use an url as identifier');
-    console.log('       -i: use a raw identifier as salt word');
+    PrintUsage();
     process.exit(1);
   }
 
@@ -66,11 +87,25 @@ function parseIdentifierFromArgv(): string {
   }
 }
 
+var e: Encoder = new Encoder();
+
+let {l, r} = argv;
+
+if(l != null) {
+  e.length = parseInt(l);
+  if(isNaN(e.length)) {
+    PrintUsage();
+    process.exit(1);
+  }
+}
+if (r != null) {
+  e.alphaNumericRestrict = true;
+};
+
 console.log("Beta version");
+e.identifier = parseIdentifierFromArgv();
 
-let identifier = parseIdentifierFromArgv();
-
-console.log("identifier: " + identifier);
+console.log("identifier: " + e.identifier);
 
 prompt.message = "";
 prompt.delimiter = "";
@@ -87,8 +122,7 @@ prompt.get([{
         console.error(err);
         process.exit(1);
       }
-
-      var e: Encoder = new Encoder(identifier, result.password);
+      e.pass = result.password;
       copypaste.copy(e.getPass(), function(aText: string) {
           console.log("encrypted password have been copied into clipboard");
           process.exit(0);
