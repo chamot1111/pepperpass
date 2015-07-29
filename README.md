@@ -1,3 +1,5 @@
+    Warning: Beta version
+
 # pepperpass
 
 This is a simple apps to salt keyword.
