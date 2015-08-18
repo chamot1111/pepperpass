@@ -9,6 +9,7 @@ var startSlice = (process.argv[0] == 'node') ? 2 : 1;
 var argv = minimist(process.argv.slice(startSlice));
 var Encoder = (function () {
     function Encoder() {
+        this.numRound = 500;
         this.length = 23;
         this.alphaNumericRestrict = false;
     }
@@ -16,7 +17,7 @@ var Encoder = (function () {
         return this.identifier + ':' + this.pass;
     };
     Encoder.prototype.getPass = function () {
-        var shaObj = new jssha("SHA-512", "TEXT");
+        var shaObj = new jssha("SHA-512", "TEXT", { numRounds: this.numRound });
         shaObj.update(this.getTextToHash());
         var hash = shaObj.getHash("B64");
         if (this.alphaNumericRestrict) {
@@ -35,7 +36,7 @@ function areParamsCorrects(argv) {
         .value());
     var unknownParametersCount = _.size(_.chain(argv)
         .keys()
-        .reject(function (k) { return _.contains(['u', 'i', 'l', 'r', '_'], k); })
+        .reject(function (k) { return _.contains(['u', 'i', 'l', 'r', 'n', '_'], k); })
         .value());
     return mandatoryCount == 1 && unknownParametersCount == 0;
 }
@@ -53,6 +54,7 @@ function PrintUsage() {
     console.log('       -i: use a raw identifier as salt word');
     console.log('       -r: restrict caracters to [a-Z0-9]');
     console.log('       -l: length (default 23)');
+    console.log('       -n: num rounds for sha (default 500)');
 }
 function parseIdentifierFromArgv() {
     if (!areParamsCorrects(argv)) {
@@ -71,7 +73,7 @@ function parseIdentifierFromArgv() {
     }
 }
 var e = new Encoder();
-var l = argv.l, r = argv.r;
+var l = argv.l, r = argv.r, n = argv.n;
 if (l != null) {
     e.length = parseInt(l);
     if (isNaN(e.length)) {
@@ -83,9 +85,13 @@ if (r != null) {
     e.alphaNumericRestrict = true;
 }
 ;
+if (n != null) {
+    e.numRound = parseInt(n);
+}
 console.log("Beta version");
 e.identifier = parseIdentifierFromArgv();
 console.log("identifier: " + e.identifier);
+console.log("num round: " + e.numRound);
 prompt.message = "";
 prompt.delimiter = "";
 prompt.start();

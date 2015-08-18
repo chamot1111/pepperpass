@@ -15,8 +15,10 @@ class Encoder {
     identifier: string;
     length: number;
     alphaNumericRestrict: boolean;
+    numRound: number;
 
     constructor() {
+      this.numRound = 500;
       this.length = 23;
       this.alphaNumericRestrict = false;
     }
@@ -26,7 +28,7 @@ class Encoder {
     }
 
     getPass(): string {
-      var shaObj = new jssha("SHA-512", "TEXT");
+      var shaObj = new jssha("SHA-512", "TEXT", {numRounds: this.numRound});
       shaObj.update(this.getTextToHash());
       var hash = shaObj.getHash("B64");
       if(this.alphaNumericRestrict) {
@@ -47,7 +49,7 @@ function areParamsCorrects(argv: any): boolean {
               .value());
   let unknownParametersCount = _.size(_.chain(argv)
               .keys()
-              .reject(function(k: string) { return _.contains(['u', 'i', 'l', 'r', '_'], k)})
+              .reject(function(k: string) { return _.contains(['u', 'i', 'l', 'r', 'n', '_'], k)})
               .value());
   return mandatoryCount == 1 && unknownParametersCount == 0;
 }
@@ -67,6 +69,7 @@ function PrintUsage() {
   console.log('       -i: use a raw identifier as salt word');
   console.log('       -r: restrict caracters to [a-Z0-9]');
   console.log('       -l: length (default 23)');
+  console.log('       -n: num rounds for sha (default 500)');
 }
 
 function parseIdentifierFromArgv(): string {
@@ -89,7 +92,7 @@ function parseIdentifierFromArgv(): string {
 
 var e: Encoder = new Encoder();
 
-let {l, r} = argv;
+let {l, r, n} = argv;
 
 if(l != null) {
   e.length = parseInt(l);
@@ -101,11 +104,15 @@ if(l != null) {
 if (r != null) {
   e.alphaNumericRestrict = true;
 };
+if (n != null) {
+  e.numRound = parseInt(n);
+}
 
 console.log("Beta version");
 e.identifier = parseIdentifierFromArgv();
 
 console.log("identifier: " + e.identifier);
+console.log("num round: " + e.numRound);
 
 prompt.message = "";
 prompt.delimiter = "";
